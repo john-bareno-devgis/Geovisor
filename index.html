@@ -1,186 +1,57 @@
+<!--
+
+To run this demo, you need to replace 'YOUR_ACCESS_TOKEN' with an access token from ArcGIS that has the correct privileges.
+
+To get started, sign up for a free ArcGIS Location Platform account or a free trial of ArcGIS Online and create developer credentials.
+
+https://developers.arcgis.com/documentation/security-and-authentication/get-started/
+
+-->
+
+
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    <title>GeoVisor-John_Bareño</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>ArcGIS Maps SDK for JavaScript Tutorials: Display a map</title>
 
     <style>
       html,
-      /* Agrego los estilos de los elementos */
-      body {
+      body,
+      arcgis-map {
         padding: 0;
         margin: 0;
         height: 100%;
         width: 100%;
       }
-      .mapa {
-        height: 100%;
-        width: 100%;
-      }
-
-      .dialogDiv {
-        width: 300px;
-        padding: 20px;
-        background-color: #f2f2f2b6;
-        border-radius: 5px;
-        text-align: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        margin: 0 auto;
-      }
-      .divipola {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 10px;
-        box-sizing: border-box;
-      }
-      button {
-        background-color: #f44336;
-        color: white;
-        min-width: 130px;
-        height: 40px;
-        color: #fff;
-        padding: 5px 10px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        display: inline-block;
-        outline: none;
-        border-radius: 5px;
-        border: none;
-        background: #343a40;
-        box-shadow: 0 5px #212529;
-      }
     </style>
-    <!-- Agrego la SDK de ARCGIS para JavaScript -->
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.28/esri/themes/light/main.css"
-    />
-    <script src="https://js.arcgis.com/4.28/"></script>
 
-    <script>
-      //Defino algunas variables globales
-      let layerMunicipios, layerSuelos, viewMap;
+    
 
-      require([
-        "esri/Map",
-        "esri/views/MapView",
-        "esri/Basemap",
-        "esri/layers/VectorTileLayer",
-        "esri/layers/FeatureLayer",
-      ], function (Map, MapView, Basemap, VectorTileLayer, FeatureLayer) {
-        //Creo el mapa base
-        const basemap = new Basemap({
-          baseLayers: [
-            new VectorTileLayer({
-              url: "https://tiles.arcgis.com/tiles/RVvWzU3lgJISqdke/arcgis/rest/services/Mapa_base_topografico/VectorTileServer",
-            }),
-          ],
-        });
-        //Creo un mapa con el mapabase y lo agrego a una vista de mapa
-        mapa = new Map({
-          basemap: basemap,
-        });
-        viewMap = new MapView({
-          map: mapa,
-          center: [-74.297333, 4.570868],
-          zoom: 5,
-          container: "divMap",
-        });
-        //Agrego el div donde estara el dialogo con los botones (front)
-        viewMap.ui.add("dialogDiv", "bottom-left");
-        //Creo la capa q voya consultar, y la agrego al mapa (apagada)
-        layerMunicipios = new FeatureLayer({
-          url: "https://services2.arcgis.com/RVvWzU3lgJISqdke/ArcGIS/rest/services/Carto_Municipios/FeatureServer/0",
-          outFields: ["*"],
-          visible: false,
-        });
-        viewMap.map.add(layerMunicipios);
-      });
+    <!-- Load Calcite components from CDN -->
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css" />
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"></script>
 
-      async function filtroMunicipio() {
-        //Quito los resultados anteriores
-        layerMunicipios.visible = true;
-        viewMap.graphics.removeAll();
-        //Capturo el valor ingresado en el cuadro de texto y arm una consulta con el
-        const divipola = document.getElementById("divipola").value;
-        const Query = require("esri/rest/support/Query");
-        const FeatureFilter = require("esri/layers/support/FeatureFilter");
-        const query = new Query();
-        query.where = "MPIO_CCDGO = '" + divipola + "'";
-        //Filtro la vista de la capa segun la consulta armada y me acerco a los resultados (zoom)
-        await viewMap.whenLayerView(layerMunicipios).then(function (layerView) {
-          layerView.queryFeatures(query).then(function (results) {
-            if (results.features.length != 0) {
-              viewMap.goTo(results.features);
-            }
-            layerView.filter = new FeatureFilter({
-              where: query.where,
-            });
-          });
-        });
-      }
+    <!-- Load the ArcGIS Maps SDK for JavaScript from CDN -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.31/"></script>
 
-      async function filtroSuelo() {
-        //Quito los resultados anteriores
-        layerMunicipios.visible = false;
-        viewMap.graphics.removeAll();
-        //Creo un arreglo donde guardare los resultados y capturo la divipola
-        const polygons = [];
-        const divipola = document.getElementById("divipola").value;
-        //Hago una consulta en el servicio para recibir los resultados como un JSON
-        const queryLayer = await fetch(
-          "https://services2.arcgis.com/RVvWzU3lgJISqdke/ArcGIS/rest/services/clasificacionsuelopot/FeatureServer/0/query?where=MpCodigo = '" +
-            divipola +
-            "'&f=json&outSR=4326"
-        )
-          .then((response) => response.json())
-          .then((json) => {
-            //Recorro los resultados del JSON y creo un poligono con cada uno
-            Graphic = require("esri/Graphic");
-            json.features.forEach((feature) => {
-              const polygon = {
-                type: "polygon",
-                rings: feature.geometry.rings,
-              };
-              const fillSymbol = {
-                type: "simple-fill", // autocasts as new SimpleFillSymbol()
-                color: [227, 139, 79, 0.8],
-                outline: {
-                  // autocasts as new SimpleLineSymbol()
-                  color: [255, 255, 255],
-                  width: 1,
-                },
-              };
-              const polygonGraphic = new Graphic({
-                geometry: polygon,
-                symbol: fillSymbol,
-              });
-              //Agrego los poligonos creados al arreglo arriba declarado, lo agrego al map y me acerco a él
-              polygons.push(polygonGraphic);
-            });
-            viewMap.graphics.addMany(polygons);
-            viewMap.goTo(polygons);
-          });
-      }
-    </script>
+    <!-- Load Map components from CDN-->
+    <script
+      type="module"
+      src="https://js.arcgis.com/map-components/4.31/arcgis-map-components.esm.js"
+    ></script>
+
   </head>
 
   <body>
-    <!-- Creo un div para el mapa, y el div del dialogo (front) -->
-    <div id="divMap" class="mapa"></div>
-    <div id="dialogDiv" class="dialogDiv">
-      <label>DIVIPOLA</label>
-      <input type="text" id="divipola" class="divipola" />
-      <br />
-      <button onclick="filtroMunicipio()" class="boton-servicio">
-        Servicio Web
-      </button>
-      <button onclick="filtroSuelo()" class="boton-backend">Backend</button>
-    </div>
+
+    <arcgis-map center="-118.805, 34.027" zoom="13">
+
+      <arcgis-zoom position="top-left"></arcgis-zoom>
+
+    </arcgis-map>
+
   </body>
+
 </html>
