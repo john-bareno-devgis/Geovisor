@@ -1,12 +1,13 @@
 var map = new ol.Map({
-    target: 'map', // El elemento donde se renderizará el mapa
+    target: 'map', 
     layers: [
         new ol.layer.Tile({
-            source: new ol.source.OSM() // Mapa base de OpenStreetMap
+            source: new ol.source.OSM() 
         })
     ],
     view: new ol.View({
-        center: ol.proj.fromLonLat([-3.7038, 40.4168]), // Coordenadas (longitud, latitud)
-        zoom: 12 // Nivel de zoom inicial
+        center: ol.proj.fromLonLat([-74.100723, 4.663346]), 
+        zoom: 12 
     })
 });
+
